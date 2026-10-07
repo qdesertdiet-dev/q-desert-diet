@@ -30,7 +30,6 @@ export function initializeAdminLayout(){
 		sidebar.appendChild(navigation);
 	}
 	navigation.setAttribute('aria-label','Admin sections');
-	navigation.querySelectorAll('a[href="orders.html"]').forEach(link=>link.remove());
 	if(!navigation.querySelector('a')){
 		navigationItems.forEach(([label,href])=>{
 			const link = document.createElement('a');

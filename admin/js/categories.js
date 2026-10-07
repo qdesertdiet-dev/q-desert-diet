@@ -1,10 +1,15 @@
 import { db } from '../../shared/firebase.js';
-import { collection, addDoc, onSnapshot, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import { localizedText, localizedValue } from '../../shared/multilingual.js';
+import { collection, addDoc, onSnapshot, deleteDoc, doc, setDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
 const categoryName = document.getElementById('categoryName');
+const categoryNameAr = document.getElementById('category-name-ar');
 const categoryList = document.getElementById('categoryList');
 const addButton = document.getElementById('addCategory');
 const categoryStatus = document.getElementById('category-status');
+const categoryForm = document.getElementById('category-form');
+const categoryId = document.getElementById('category-id');
+let categories = [];
 
 function setCategoryStatus(message, state='info') {
   if (!categoryStatus) return;
@@ -30,17 +35,21 @@ function renderCategories() {
       return;
     }
 
-    snap.forEach((docSnap) => {
+    categories = snap.docs.map(docSnap=>({id:docSnap.id,...docSnap.data()}));
+    categories.forEach((data) => {
       const item = document.createElement('div');
       item.className = 'list-item';
-      const data = docSnap.data();
       const name = document.createElement('span');
-      name.textContent = data.name || 'Unnamed category';
+      name.textContent = localizedText(data.name,'en') || 'Unnamed category';
+      const editButton = document.createElement('button');
+      editButton.className = 'edit';
+      editButton.dataset.id = data.id;
+      editButton.textContent = 'Edit';
       const deleteButton = document.createElement('button');
       deleteButton.className = 'del';
-      deleteButton.dataset.id = docSnap.id;
+      deleteButton.dataset.id = data.id;
       deleteButton.textContent = 'Delete';
-      item.append(name, deleteButton);
+      item.append(name, editButton, deleteButton);
       categoryList.appendChild(item);
     });
   }, (error) => {
@@ -49,30 +58,49 @@ function renderCategories() {
   });
 }
 
-addButton && addButton.addEventListener('click', async () => {
+categoryForm && categoryForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
   if (!ensureFirestoreReady()) return;
 
   const name = categoryName.value.trim();
   if (!name) return alert('Please enter a category name.');
 
   try {
-    await addDoc(collection(db, 'categories'), {
-      name,
-      createdAt: Date.now()
-    });
-    categoryName.value = '';
-    setCategoryStatus('Added', 'success');
+    const id = categoryId.value;
+    const categoryData = {
+      name:localizedValue(name,categoryNameAr.value.trim()),
+      ...(id ? {updatedAt:Date.now()} : {createdAt:Date.now()})
+    };
+    if(id) await setDoc(doc(db,'categories',id),categoryData,{merge:true});
+    else await addDoc(collection(db,'categories'),categoryData);
+    categoryForm.reset();
+    categoryId.value = '';
+    addButton.textContent = 'Add Category';
+    setCategoryStatus(id ? 'Updated' : 'Added', 'success');
   } catch (err) {
     console.error('Add category failed', err);
-    const code = err && err.code ? err.code : 'unknown';
-    const message = err && err.message ? err.message : 'Unknown error';
-    alert(`Failed to add category. Firebase error: ${code} - ${message}`);
+    setCategoryStatus(err.message || 'Could not save category.', 'error');
   }
+});
+
+categoryForm && categoryForm.addEventListener('reset',()=>{
+  categoryId.value = '';
+  addButton.textContent = 'Add Category';
 });
 
 categoryList && categoryList.addEventListener('click', async (e) => {
   const target = e.target;
   if (!target || !target.dataset.id) return;
+
+  if(target.classList.contains('edit')){
+    const category = categories.find(entry=>entry.id === target.dataset.id);
+    if(!category) return;
+    categoryId.value = category.id;
+    categoryName.value = localizedText(category.name,'en');
+    categoryNameAr.value = category.name && typeof category.name === 'object' ? category.name.ar || '' : '';
+    addButton.textContent = 'Save Category';
+    setCategoryStatus('Editing category.', 'info');
+  }
 
   if (target.classList.contains('del')) {
     if (!ensureFirestoreReady()) return;

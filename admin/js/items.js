@@ -1,4 +1,5 @@
 import { db, firebaseApp } from '../../shared/firebase.js';
+import { localizedText, localizedValue } from '../../shared/multilingual.js';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import { getStorage, ref as storageRef, deleteObject } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
@@ -19,7 +20,9 @@ function ensureFirebaseReady() {
 const form = document.getElementById('item-form');
 const idInput = document.getElementById('item-id');
 const nameInput = document.getElementById('item-name');
+const nameArabicInput = document.getElementById('item-name-ar');
 const descriptionInput = document.getElementById('item-description');
+const descriptionArabicInput = document.getElementById('item-description-ar');
 const catInput = document.getElementById('item-category');
 const priceInput = document.getElementById('item-price');
 const discountInput = document.getElementById('item-discount');
@@ -154,14 +157,16 @@ function loadCategoryOptions(){
 		catInput.innerHTML = '<option value="">Select category</option>';
 		snap.forEach((docSnap) => {
 			const data = docSnap.data();
-			const name = data.name;
+			const name = localizedText(data.name,'en');
 			if (!name) return;
-			categoryOptions.push(name);
 			const option = document.createElement('option');
-			option.value = name;
+			option.value = docSnap.id;
 			option.textContent = name;
-			if (currentValue && currentValue === name) option.selected = true;
+			option.dataset.nameEn = name;
+			option.dataset.nameAr = localizedText(data.name,'ar');
+			if (currentValue && (currentValue === docSnap.id || currentValue === name)) option.selected = true;
 			catInput.appendChild(option);
+			categoryOptions.push(docSnap.id);
 		});
 		if (!currentValue && categoryOptions.length) {
 			catInput.value = categoryOptions[0];
@@ -230,7 +235,7 @@ async function renderItems(){
 					el.appendChild(thumb);
 				}
 				const details = document.createElement('span');
-				details.textContent = `${data.name || 'Unnamed item'} — ${data.category || 'Uncategorized'} — ৳${Number(data.price) || 0}`;
+				details.textContent = `${localizedText(data.name,'en') || 'Unnamed item'} — ${localizedText(data.category,'en') || 'Uncategorized'} — QAR ${Number(data.price) || 0}`;
 				const actions = document.createElement('div');
 				const editButton = document.createElement('button');
 				editButton.dataset.id = docSnap.id;
@@ -264,15 +269,16 @@ async function renderItems(){
 	}
 
 	const payload = {
-		name: nameInput.value.trim(),
-		description: descriptionInput ? descriptionInput.value.trim() : '',
-		category: catInput && catInput.value ? catInput.value.trim() : 'Uncategorized',
+		nameEnglish: nameInput.value.trim(),
+		nameArabic: nameArabicInput.value.trim(),
+		descriptionEnglish: descriptionInput ? descriptionInput.value.trim() : '',
+		descriptionArabic: descriptionArabicInput ? descriptionArabicInput.value.trim() : '',
 		price: Number(priceInput.value) || 0,
 		discount: Number(discountInput ? discountInput.value : 0) || 0,
 		popular: Boolean(popularInput?.checked),
 		updatedAt: Date.now()
 	};
-	if (!payload.name) return alert('Please enter a product title.');
+	if (!payload.nameEnglish) return alert('Please enter a product title.');
 	if (!Number.isFinite(payload.price) || payload.price < 0) {
 		setItemStatus('Enter a valid non-negative price.', 'error');
 		return;
@@ -297,12 +303,26 @@ async function renderItems(){
 		const isEditing = Boolean(idInput.value);
 		const docRef = isEditing ? doc(db,'items',idInput.value) : doc(collection(db,'items'));
 		const existingSnap = isEditing ? await getDoc(docRef) : null;
-		const existing = existingSnap && existingSnap.exists() ? (existingSnap.data().images || []) : [];
+		const existingData = existingSnap && existingSnap.exists() ? existingSnap.data() : {};
+		const existing = existingData.images || [];
+		const categoryOption = catInput.selectedOptions[0];
+		const categoryEnglish = categoryOption?.dataset.nameEn || 'Uncategorized';
+		const categoryArabic = categoryOption?.dataset.nameAr || '';
 		if(files.length){
 			for(const file of files) uploadedImages.push(await uploadImageToCloudinary(file));
 		}
 		const finalImages = existing.filter(image=>!removedImageIds.includes(getImageId(image))).concat(uploadedImages).slice(0,3);
-		const itemData = {...payload, images: finalImages};
+		const itemData = {
+			name:localizedValue(payload.nameEnglish,payload.nameArabic),
+			description:localizedValue(payload.descriptionEnglish,payload.descriptionArabic),
+			category:localizedValue(categoryEnglish,categoryArabic),
+			categoryId:categoryOption?.value || '',
+			price:payload.price,
+			discount:payload.discount,
+			popular:payload.popular,
+			updatedAt:payload.updatedAt,
+			images:finalImages
+		};
 		if(isEditing) await setDoc(docRef, itemData, {merge:true});
 		else await setDoc(docRef, itemData);
 		const imageDeleteFailures = await deleteRemovedImages(
@@ -310,6 +330,8 @@ async function renderItems(){
 		);
 
 		form.reset(); idInput.value = '';
+		nameArabicInput.value = '';
+		descriptionArabicInput.value = '';
 		existingImages = [];
 		if (discountInput) discountInput.value = 0;
 		if (imageInput) imageInput.value = '';
@@ -337,15 +359,17 @@ list.addEventListener('click', async (ev)=>{
 	if(!id) return;
 	if(ev.target.classList.contains('edit')){
 		if (!ensureFirebaseReady()) return;
-		if(!isAdmin) return alert('আপনি অনুমোদিত নন (Not authorized)');
+		if(!isAdmin) return alert('This account is not authorized to manage items.');
 		const dref = doc(db,'items',id);
 		const single = await getDoc(dref);
 		if(single.exists()){
 			const data = single.data();
 			idInput.value = id;
-			nameInput.value = data.name || '';
-			descriptionInput.value = data.description || '';
-			catInput.value = data.category || '';
+			nameInput.value = localizedText(data.name,'en');
+			nameArabicInput.value = data.name && typeof data.name === 'object' ? data.name.ar || '' : '';
+			descriptionInput.value = localizedText(data.description,'en');
+			descriptionArabicInput.value = data.description && typeof data.description === 'object' ? data.description.ar || '' : '';
+			catInput.value = data.categoryId || localizedText(data.category,'en');
 			priceInput.value = data.price || 0;
 			discountInput.value = data.discount || 0;
 			if(popularInput) popularInput.checked = typeof data.popular === 'boolean'
@@ -356,7 +380,7 @@ list.addEventListener('click', async (ev)=>{
 	}
 	if(ev.target.classList.contains('del')){
 		if (!ensureFirebaseReady()) return;
-		if(!isAdmin) return alert('আপনি অনুমোদিত নন (Not authorized)');
+		if(!isAdmin) return alert('This account is not authorized to manage items.');
 		if(confirm('Delete this item?')){
 			try{
 				const dref = doc(db,'items',id);

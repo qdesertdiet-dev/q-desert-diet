@@ -32,19 +32,27 @@
     </div>
 
     <div class="panel">
-      <div class="form-row" style="display:flex; flex-wrap:wrap; gap:12px; align-items:end;">
-        <div style="flex:1; min-width:220px;">
-          <label for="categoryName" style="display:block; margin-bottom:8px; font-weight:700; color:#2a3e35;">Category name</label>
-          <input id="categoryName" placeholder="Enter your category name">
+      <form id="category-form" class="admin-form">
+        <input id="category-id" type="hidden">
+        <div class="field-group">
+          <label for="categoryName">Category name (English)</label>
+          <input id="categoryName" placeholder="Enter your category name" required>
         </div>
-        <button id="addCategory" class="primary-btn" type="button">Add Category</button>
-      </div>
+        <div class="field-group">
+          <label for="category-name-ar">Category name (Arabic)</label>
+          <input id="category-name-ar" lang="ar" dir="rtl" placeholder="الاسم بالعربية">
+        </div>
+        <div class="form-actions">
+          <button id="addCategory" class="primary-btn" type="submit">Add Category</button>
+          <button id="reset-category" class="secondary-btn" type="reset">Reset</button>
+        </div>
+      </form>
       <p id="category-status" class="form-status" role="status" aria-live="polite"></p>
       <div id="categoryList" class="list-stack"></div>
     </div>
   </main>
 
   <script type="module" src="js/auth.js?v=12"></script>
-  <script type="module" src="js/categories.js"></script>
+  <script type="module" src="js/categories.js?v=3"></script>
 </body>
 </html>

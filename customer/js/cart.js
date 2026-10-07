@@ -1,5 +1,6 @@
 import { getUrlParams } from './restaurant.js';
 import { db } from '../../shared/firebase.js';
+import { localizedText } from '../../shared/multilingual.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
 let storedCart = [];
@@ -17,6 +18,14 @@ const checkoutBtn = document.getElementById('checkout');
 const cartItemsCount = document.getElementById('cart-items-count');
 const tableNumberInput = document.getElementById('table-number');
 const locationNumberLabel = document.getElementById('location-number-label');
+const lang = localStorage.getItem('lang') === 'ar' ? 'ar' : 'en';
+localStorage.setItem('lang',lang);
+const copy = {
+	en:{back:'Back',backCatalog:'Back to catalog',yourOrder:'YOUR ORDER',yourCart:'Your Cart',reviewCart:'Review your items before checkout.',orderItems:'Order items',placeOrder:'Place Order',table:'Table number',room:'Room number',enterTable:'Enter your table number',enterRoom:'Enter your room number',item:'item',items:'items',emptyTitle:'Your cart is empty',emptyMessage:'Choose an item from the catalog to get started.',browse:'Browse the catalog',noImage:'No image',product:'Product',each:'each',remove:'Remove',total:'Total',currency:'QAR ',enterNumber:'Please enter your {place} number.',range:'Enter a number from 1 to {count}.',missingWhatsApp:'WhatsApp number is not set for this business.',invalidWhatsApp:'The saved WhatsApp number is invalid. Update it in admin settings.'},
+	ar:{back:'رجوع',backCatalog:'العودة إلى القائمة',yourOrder:'طلبك',yourCart:'سلتك',reviewCart:'راجع المنتجات قبل تأكيد الطلب.',orderItems:'المنتجات',placeOrder:'إرسال الطلب',table:'رقم الطاولة',room:'رقم الغرفة',enterTable:'أدخل رقم الطاولة',enterRoom:'أدخل رقم الغرفة',item:'منتج',items:'منتجات',emptyTitle:'سلتك فارغة',emptyMessage:'اختر منتجًا من القائمة للبدء.',browse:'تصفح القائمة',noImage:'لا توجد صورة',product:'منتج',each:'للوحدة',remove:'حذف',total:'الإجمالي',currency:'ر.ق ',enterNumber:'أدخل رقم {place}.',range:'أدخل رقمًا من 1 إلى {count}.',missingWhatsApp:'لم يتم إعداد رقم واتساب لهذا النشاط.',invalidWhatsApp:'رقم واتساب المحفوظ غير صالح. حدّثه من إعدادات الإدارة.'}
+};
+document.documentElement.lang = lang;
+document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
 let checkoutLocationType = localStorage.getItem('checkoutLocationType') === 'room' ? 'room' : 'table';
 let checkoutLocationCount = Number(localStorage.getItem('checkoutLocationCount'));
 let checkoutSettingsReady = false;
@@ -30,12 +39,24 @@ catalogUrl.search = location.search;
 document.querySelectorAll('a[href="index.html"]').forEach(link=>{ link.href = catalogUrl.href; });
 
 function updateRestaurantName(value){
-	const name = value || 'Your Business';
+	const name = localizedText(value,lang) || 'Your Business';
 	document.querySelectorAll('[data-restaurant-name]').forEach(element=>{ element.textContent = name; });
 	document.title = `${name} | Your Cart`;
 }
 
-updateRestaurantName(localStorage.getItem('restaurantName'));
+updateRestaurantName({en:localStorage.getItem('restaurantName') || '',ar:localStorage.getItem('restaurantNameAr') || ''});
+
+function applyLanguage(){
+	document.querySelectorAll('[data-i18n]').forEach(element=>{
+		const key = element.dataset.i18n;
+		if(copy[lang][key]) element.textContent = copy[lang][key];
+	});
+	document.querySelectorAll('[data-i18n-aria]').forEach(element=>{
+		const key = element.dataset.i18nAria;
+		if(copy[lang][key]) element.setAttribute('aria-label',copy[lang][key]);
+	});
+}
+applyLanguage();
 
 function applyButtonColor(value){
 	const color = String(value || '').trim();
@@ -61,13 +82,10 @@ function applyCheckoutLocation(settings){
 	const isRoom = checkoutLocationType === 'room';
 	const label = isRoom ? 'Room number' : 'Table number';
 	const placeholder = isRoom ? 'Enter your room number' : 'Enter your table number';
-	const lang = localStorage.getItem('lang') || 'en';
-	const translatedLabel = lang === 'bn'
-		? (isRoom ? 'রুম নম্বর' : 'টেবিল নম্বর')
-		: label;
+	const translatedLabel = lang === 'ar' ? (isRoom ? copy.ar.room : copy.ar.table) : label;
 	locationNumberLabel.firstChild.textContent = `${translatedLabel} `;
-	tableNumberInput.placeholder = lang === 'bn'
-		? (isRoom ? 'আপনার রুম নম্বর লিখুন' : 'আপনার টেবিল নম্বর লিখুন')
+	tableNumberInput.placeholder = lang === 'ar'
+		? (isRoom ? copy.ar.enterRoom : copy.ar.enterTable)
 		: placeholder;
 	tableNumberInput.max = String(checkoutLocationCount);
 	tableNumberInput.setCustomValidity('');
@@ -81,6 +99,9 @@ applyCheckoutLocation({locationType:checkoutLocationType,locationCount:checkoutL
 applyButtonColor(localStorage.getItem('buttonColor'));
 window.addEventListener('storage',event=>{
 	if(event.key === 'buttonColor') applyButtonColor(event.newValue);
+	if(event.key === 'restaurantName' || event.key === 'restaurantNameAr'){
+		updateRestaurantName({en:localStorage.getItem('restaurantName') || '',ar:localStorage.getItem('restaurantNameAr') || ''});
+	}
 	if(event.key === 'checkoutLocationType' || event.key === 'checkoutLocationCount'){
 		applyCheckoutLocation({
 			locationType:localStorage.getItem('checkoutLocationType'),
@@ -90,7 +111,7 @@ window.addEventListener('storage',event=>{
 });
 
 function productKey(item){
-	return item.id ? `id:${item.id}` : `name:${item.name || ''}|${item.category || ''}`;
+	return item.id ? `id:${item.id}` : `name:${localizedText(item.name,'en')}|${localizedText(item.category,'en')}`;
 }
 
 if(Array.isArray(storedCart)){
@@ -118,7 +139,8 @@ async function loadBusinessSettings(){
 		if(!settings.exists()) return;
 		const data = settings.data();
 		if(data.restaurantName){
-			localStorage.setItem('restaurantName', data.restaurantName);
+			localStorage.setItem('restaurantName',localizedText(data.restaurantName,'en'));
+			localStorage.setItem('restaurantNameAr',localizedText(data.restaurantName,'ar'));
 			updateRestaurantName(data.restaurantName);
 		}
 		if(data.whatsapp){
@@ -148,9 +170,9 @@ function itemPrice(item){
 function renderCart(){
 	let total = 0;
 	const itemCount = cart.reduce((sum,item)=>sum + item.quantity,0);
-	if(cartItemsCount) cartItemsCount.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
+	if(cartItemsCount) cartItemsCount.textContent = `${itemCount} ${itemCount === 1 ? copy[lang].item : copy[lang].items}`;
 	if(!cart.length){
-		el.innerHTML = '<div class="cart-empty"><span class="cart-empty-icon" aria-hidden="true">&#128722;</span><h3>Your cart is empty</h3><p>Choose an item from the catalog to get started.</p><a class="cart-empty-link" href="index.html">Browse the catalog <span aria-hidden="true">&#8594;</span></a></div>';
+		el.innerHTML = `<div class="cart-empty"><span class="cart-empty-icon" aria-hidden="true">&#128722;</span><h3>${copy[lang].emptyTitle}</h3><p>${copy[lang].emptyMessage}</p><a class="cart-empty-link" href="index.html">${copy[lang].browse} <span aria-hidden="true">&#8594;</span></a></div>`;
 		el.querySelector('.cart-empty-link').href = catalogUrl.href;
 		checkoutBtn.disabled = true;
 		return;
@@ -170,13 +192,13 @@ function renderCart(){
 			const image = document.createElement('img');
 			image.className = 'cart-item-image';
 			image.src = getCartImageUrl(imageUrl);
-			image.alt = item.name || 'Product';
+			image.alt = localizedText(item.name,lang) || copy[lang].product;
 			image.loading = 'lazy';
 			row.appendChild(image);
 		}else{
 			const placeholder = document.createElement('div');
 			placeholder.className = 'cart-item-image cart-item-placeholder';
-			placeholder.textContent = 'No image';
+			placeholder.textContent = copy[lang].noImage;
 			row.appendChild(placeholder);
 		}
 
@@ -184,13 +206,13 @@ function renderCart(){
 		details.className = 'cart-item-details';
 		const title = document.createElement('h2');
 		title.className = 'cart-item-title';
-		title.textContent = item.name || 'Product';
+		title.textContent = localizedText(item.name,lang) || copy[lang].product;
 		const price = document.createElement('p');
 		price.className = 'cart-item-price';
-		price.textContent = `৳${unitPrice} each`;
+		price.textContent = `${copy[lang].currency}${unitPrice} ${copy[lang].each}`;
 		const itemTotal = document.createElement('p');
 		itemTotal.className = 'cart-item-line-total';
-		itemTotal.textContent = `৳${lineTotal}`;
+		itemTotal.textContent = `${copy[lang].currency}${lineTotal}`;
 		details.append(title,price,itemTotal);
 
 		const controls = document.createElement('div');
@@ -202,7 +224,7 @@ function renderCart(){
 		decrease.className = 'quantity-button';
 		decrease.dataset.action = 'decrease';
 		decrease.dataset.index = String(index);
-		decrease.setAttribute('aria-label',`Decrease ${item.name || 'product'} quantity`);
+		decrease.setAttribute('aria-label',`${lang === 'ar' ? 'تقليل كمية' : 'Decrease'} ${localizedText(item.name,lang) || copy[lang].product}`);
 		decrease.textContent = '−';
 		const quantityLabel = document.createElement('span');
 		quantityLabel.className = 'quantity-value';
@@ -212,7 +234,7 @@ function renderCart(){
 		increase.className = 'quantity-button';
 		increase.dataset.action = 'increase';
 		increase.dataset.index = String(index);
-		increase.setAttribute('aria-label',`Increase ${item.name || 'product'} quantity`);
+		increase.setAttribute('aria-label',`${lang === 'ar' ? 'زيادة كمية' : 'Increase'} ${localizedText(item.name,lang) || copy[lang].product}`);
 		increase.textContent = '+';
 		quantity.append(decrease,quantityLabel,increase);
 		const remove = document.createElement('button');
@@ -220,7 +242,7 @@ function renderCart(){
 		remove.className = 'remove-cart-item';
 		remove.dataset.action = 'remove';
 		remove.dataset.index = String(index);
-		remove.textContent = 'Remove';
+		remove.textContent = copy[lang].remove;
 		controls.append(quantity,remove);
 		row.append(details,controls);
 		list.appendChild(row);
@@ -229,9 +251,9 @@ function renderCart(){
 	const summary = document.createElement('div');
 	summary.className = 'cart-summary';
 	const summaryLabel = document.createElement('span');
-	summaryLabel.textContent = 'Total';
+	summaryLabel.textContent = copy[lang].total;
 	const summaryTotal = document.createElement('strong');
-	summaryTotal.textContent = `৳${total}`;
+	summaryTotal.textContent = `${copy[lang].currency}${total}`;
 	summary.append(summaryLabel,summaryTotal);
 	el.appendChild(summary);
 	checkoutBtn.disabled = !checkoutSettingsReady;
@@ -258,8 +280,8 @@ checkoutBtn.addEventListener('click', async ()=>{
 	if(!tableNumberInput.value){
 		tableNumberInput.setAttribute('aria-invalid','true');
 		const isRoom = checkoutLocationType === 'room';
-		tableNumberInput.setCustomValidity(localStorage.getItem('lang') === 'bn'
-			? (isRoom ? 'আপনার রুম নম্বর লিখুন।' : 'আপনার টেবিল নম্বর লিখুন।')
+		tableNumberInput.setCustomValidity(lang === 'ar'
+			? copy.ar.enterNumber.replace('{place}',isRoom ? 'رقم الغرفة' : 'رقم الطاولة')
 			: `Please enter your ${isRoom ? 'room' : 'table'} number.`);
 		tableNumberInput.reportValidity();
 		tableNumberInput.focus();
@@ -268,8 +290,8 @@ checkoutBtn.addEventListener('click', async ()=>{
 	const enteredNumber = Number(tableNumberInput.value);
 	if(!Number.isInteger(enteredNumber) || enteredNumber < 1 || enteredNumber > checkoutLocationCount){
 		tableNumberInput.setAttribute('aria-invalid','true');
-		tableNumberInput.setCustomValidity(localStorage.getItem('lang') === 'bn'
-			? `নম্বরটি ১ থেকে ${checkoutLocationCount}-এর মধ্যে হতে হবে।`
+		tableNumberInput.setCustomValidity(lang === 'ar'
+			? copy.ar.range.replace('{count}',String(checkoutLocationCount))
 			: `Enter a number from 1 to ${checkoutLocationCount}.`);
 		tableNumberInput.reportValidity();
 		tableNumberInput.focus();
@@ -293,10 +315,10 @@ tableNumberInput.addEventListener('input',()=>{
 
 function buildMessage(lang='en'){
 	const lines = [];
-	const restaurantName = localStorage.getItem('restaurantName') || 'Your Business';
-	if(lang === 'bn') {
-		lines.push(`${restaurantName} - নতুন অর্ডার`);
-		lines.push(`${checkoutLocationType === 'room' ? 'রুম' : 'টেবিল'} নম্বর: ${tableNumberInput.value.trim()}`);
+	const restaurantName = localizedText({en:localStorage.getItem('restaurantName') || '',ar:localStorage.getItem('restaurantNameAr') || ''},lang) || 'Your Business';
+	if(lang === 'ar') {
+		lines.push(`${restaurantName} - طلب جديد`);
+		lines.push(`${checkoutLocationType === 'room' ? 'الغرفة' : 'الطاولة'}: ${tableNumberInput.value.trim()}`);
 	} else {
 		lines.push(`${restaurantName} - New order`);
 		lines.push(`${checkoutLocationType === 'room' ? 'Room' : 'Table'} No: ${tableNumberInput.value.trim()}`);
@@ -304,13 +326,13 @@ function buildMessage(lang='en'){
 	lines.push('');
 	let sum = 0;
 	cart.forEach((item, index) => {
-		const name = item.bnName && lang === 'bn' ? item.bnName : item.name;
+		const name = localizedText(item.name,lang) || 'Product';
 		const lineTotal = itemPrice(item) * item.quantity;
-		lines.push(`${index + 1}. ${item.quantity} x ${name} — ৳${lineTotal}`);
+		lines.push(`${index + 1}. ${item.quantity} x ${name} — ${copy[lang].currency}${lineTotal}`);
 		sum += lineTotal;
 	});
 	lines.push('');
-	lines.push(lang === 'bn' ? `মোট: ৳${sum}` : `Total: ৳${sum}`);
+	lines.push(lang === 'ar' ? `الإجمالي: ${copy[lang].currency}${sum}` : `Total: ${copy[lang].currency}${sum}`);
 	return lines.join('\n');
 }
 
@@ -320,16 +342,16 @@ async function sendWhatsApp(){
 	const number = localStorage.getItem('whatsappNumber') || localStorage.getItem('siteWhatsApp') || '';
 	if(!number){
 		if(popup) popup.close();
-		alert('WhatsApp number not set for this business.');
+		alert(copy[lang].missingWhatsApp);
 		return;
 	}
-	const lang = localStorage.getItem('lang') || 'en';
+	const lang = localStorage.getItem('lang') === 'ar' ? 'ar' : 'en';
 	const msg = buildMessage(lang);
 	const encoded = encodeURIComponent(msg);
 	const clean = number.replace(/\D/g, '');
 	if(clean.length < 7){
 		if(popup) popup.close();
-		alert('The saved WhatsApp number is invalid. Update it in the admin settings.');
+		alert(copy[lang].invalidWhatsApp);
 		return;
 	}
 	const waUrl = `https://wa.me/${clean}?text=${encoded}`;

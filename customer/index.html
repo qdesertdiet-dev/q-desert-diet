@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catalog</title>
-  <script src="js/branding-bootstrap.js?v=1"></script>
+  <script src="js/branding-bootstrap.js?v=2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com">
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap"></noscript>
-  <link rel="stylesheet" href="css/customer.css?v=46">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"></noscript>
+  <link rel="stylesheet" href="css/customer.css?v=48">
 </head>
 <body>
   <main class="app">
@@ -24,7 +24,7 @@
 
       <div class="top-actions">
         <button id="theme-toggle" class="switch-toggle theme-toggle" aria-label="Toggle dark and light mode" aria-pressed="false" type="button">☾</button>
-        <button id="lang-toggle" class="switch-toggle language-toggle" aria-label="Toggle English and Bangla" aria-pressed="false" type="button"><span class="language-option language-en">EN</span><span class="language-divider" aria-hidden="true">|</span><span class="language-option language-bn">বাংলা</span></button>
+        <button id="lang-toggle" class="switch-toggle language-toggle" aria-label="Toggle English and Arabic" aria-pressed="false" type="button"><span class="language-option language-en">EN</span><span class="language-divider" aria-hidden="true">|</span><span class="language-option language-ar">العربية</span></button>
         <a class="cart-btn" href="cart.html" aria-label="Cart">
           <span class="cart-icon">🛒</span>
           <b id="cart-count">0</b>
@@ -83,7 +83,7 @@
       <span class="sticky-cart-icon" aria-hidden="true">&#128722;</span>
       <span id="confirm-order-label">Confirm Order</span>
       <span class="sticky-cart-summary"><span id="confirm-order-count">0</span> <span id="confirm-order-items">items</span></span>
-      <strong id="confirm-order-total">৳0</strong>
+      <strong id="confirm-order-total">QAR 0</strong>
       <span id="sticky-cart-action" class="sticky-cart-action" aria-hidden="true">Place Order &#8594;</span>
     </a>
 
@@ -91,6 +91,6 @@
 
   </main>
 
-  <script type="module" src="js/menu.js?v=33"></script>
+  <script type="module" src="js/menu.js?v=37"></script>
 </body>
 </html>

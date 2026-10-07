@@ -13,7 +13,7 @@ The server reads its settings from the ignored `.env` file and listens on port 8
 ## Free Render deployment
 1. Push the project to a private GitHub repository. The service-account JSON file and `.env` are ignored; never force-add them.
 2. In Render, choose **New → Blueprint** and connect the repository. Render reads `render.yaml`, installs production dependencies with `npm ci`, starts the Express server, and checks `/healthz`.
-3. In the Render service's Environment settings, enter the Firebase web settings, admin UID values, Cloudinary values, and the complete service-account JSON as the value of `FIREBASE_SERVICE_ACCOUNT_JSON`. Paste valid JSON only into Render's secret environment field; do not add it to source files or commit history.
+3. In the Render service's Environment settings, enter the Firebase web settings, admin UID values, Cloudinary values, and the complete service-account JSON as the value of `FIREBASE_SERVICE_ACCOUNT_JSON`. Paste secrets only into Render's secret environment fields; do not add them to source files or commit history.
 4. Set the Firebase Authentication authorized domain to the deployed `*.onrender.com` hostname, then deploy the Firestore rules with `firebase deploy --only firestore:rules`.
 5. Free web services can sleep while idle and cold-start on the next request; availability, memory, CPU, and bandwidth depend on the provider's current free-tier limits. Fifty visitors opening a normal, lightweight catalog should be modest because catalog reads and image delivery are handled by Firebase and Cloudinary, but this is not a 50-concurrent-user capacity guarantee. Load-test the deployed instance before relying on it during peak traffic.
 
@@ -38,6 +38,13 @@ Starter structure for a Firebase-powered customer catalog and ordering system. A
 3. Copy `.env.example` to `.env` and fill in the Firebase web configuration values. The existing local `.env` is prefilled with this project's Firebase web configuration.
 4. For server-side Firebase token verification and account management, install Firebase Admin credentials on the server and set `GOOGLE_APPLICATION_CREDENTIALS` to the service-account JSON file path. Do not put that JSON file inside a public or committed folder. Set the primary account UID in `FIREBASE_PRIMARY_ADMIN_UID`; add its UID to `FIREBASE_ADMIN_UIDS` as well. The primary account can add admins, set their passwords, and remove non-primary admins from Admin Accounts.
 5. Deploy the included Firestore rules with `firebase deploy --only firestore:rules`. Public visitors can read catalog/site settings; only users with the server-issued `admin` custom claim can modify them. The primary admin receives this claim on its first successful admin access check. The Firebase web API key is public client configuration, not a security boundary.
+
+## English and Arabic menu content
+- The customer menu supports only English (`en`) and Arabic (`ar`). New category names, product names/descriptions, and the business name are stored as `{en, ar}` maps in their existing Firestore fields; older string values remain readable with English fallback.
+- Admins enter Arabic manually in the category, product, and business settings forms. English and Arabic values are saved together in the existing Firestore fields as `{en, ar}` objects.
+- Older Firestore string values remain readable as English. Edit a legacy record and enter its Arabic value manually to convert it to the bilingual structure.
+- Editing English never triggers a translation request or overwrites the manually entered Arabic value. Customer language switching only reads stored values.
+- If Arabic is missing, customers see the English value. Arabic selection sets `dir="rtl"` and applies Arabic layout and typography to the menu and checkout.
 
 ## Cloudinary image uploads
 - Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in the server's `.env` file. The API secret stays on the server and is never sent to the browser. Do not add it to frontend JavaScript or share it in source control.

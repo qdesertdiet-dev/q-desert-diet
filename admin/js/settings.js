@@ -1,9 +1,11 @@
 // Settings persistence with Firestore + localStorage fallback.
 import { db } from '../../shared/firebase.js';
+import { localizedText, localizedValue } from '../../shared/multilingual.js';
 import { doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
 const form = document.getElementById('settings-form');
 const restaurantNameInput = document.getElementById('restaurant-name');
+const restaurantNameArabicInput = document.getElementById('restaurant-name-ar');
 const logoFileInput = document.getElementById('restaurant-logo-file');
 const logoPreview = document.getElementById('logo-preview');
 const topbarColorInput = document.getElementById('topbar-color');
@@ -111,13 +113,15 @@ async function loadSettings(){
 			if(snap.exists()){
 				if(settingsDirty) return;
 				const data = snap.data();
-				restaurantNameInput.value = data.restaurantName || '';
+				restaurantNameInput.value = localizedText(data.restaurantName,'en');
+				restaurantNameArabicInput.value = data.restaurantName && typeof data.restaurantName === 'object' ? data.restaurantName.ar || '' : '';
 				updateNamePreview();
 				const savedLogo = data.logoUrl || '';
 				updateTopbarColor(data.topbarColor || defaultTopbarColor);
 				updateButtonColor(data.buttonColor || defaultButtonColor);
 				updateLogoPreview(savedLogo);
 				localStorage.setItem('restaurantName', restaurantNameInput.value || 'Your Business');
+				localStorage.setItem('restaurantNameAr', restaurantNameArabicInput.value || '');
 				localStorage.setItem('siteLogoUrl', savedLogo);
 				return;
 			}
@@ -129,6 +133,7 @@ async function loadSettings(){
 	const topbarColor = normalizeColor(localStorage.getItem('topbarColor') || defaultTopbarColor);
 	const buttonColor = normalizeColor(localStorage.getItem('buttonColor') || defaultButtonColor, defaultButtonColor);
 	restaurantNameInput.value = restaurantName;
+	restaurantNameArabicInput.value = localStorage.getItem('restaurantNameAr') || '';
 	updateNamePreview();
 	updateLogoPreview(logoUrl);
 	updateTopbarColor(topbarColor);
@@ -138,16 +143,19 @@ async function loadSettings(){
 async function saveSettings(e){
 	e && e.preventDefault();
 	const restaurantName = restaurantNameInput.value.trim() || 'Your Business';
+	const restaurantNameArabic = restaurantNameArabicInput.value.trim();
 	updateNamePreview();
 	const logoUrl = localStorage.getItem('siteLogoUrl') || '';
 	const topbarColor = normalizeColor(topbarColorInput ? topbarColorInput.value : topbarColorValue.value);
 	const buttonColor = normalizeColor(buttonColorInput ? buttonColorInput.value : buttonColorValue.value, defaultButtonColor);
-	pendingSettings = { restaurantName, logoUrl, topbarColor, buttonColor };
+	const localizedRestaurantName = localizedValue(restaurantName,restaurantNameArabic);
+	pendingSettings = { restaurantName:localizedRestaurantName, logoUrl, topbarColor, buttonColor };
 
 	if(db){
 		try{
-			await setDoc(doc(db,'config','site'), { restaurantName, logoUrl, topbarColor, buttonColor }, { merge: true });
+			await setDoc(doc(db,'config','site'), { restaurantName:localizedRestaurantName, logoUrl, topbarColor, buttonColor }, { merge: true });
 			localStorage.setItem('restaurantName', restaurantName);
+			localStorage.setItem('restaurantNameAr',restaurantNameArabic);
 			localStorage.setItem('siteLogoUrl', logoUrl);
 			updateTopbarColor(topbarColor);
 			updateButtonColor(buttonColor);
@@ -156,6 +164,7 @@ async function saveSettings(e){
 			console.warn('Failed to save to Firestore, saving locally', err);
 			pendingSettings = null;
 			localStorage.setItem('restaurantName', restaurantName);
+			localStorage.setItem('restaurantNameAr',restaurantNameArabic);
 			localStorage.setItem('siteLogoUrl', logoUrl);
 			updateTopbarColor(topbarColor);
 			updateButtonColor(buttonColor);
@@ -164,6 +173,7 @@ async function saveSettings(e){
 	}else{
 		pendingSettings = null;
 		localStorage.setItem('restaurantName', restaurantName);
+		localStorage.setItem('restaurantNameAr',restaurantNameArabic);
 		localStorage.setItem('siteLogoUrl', logoUrl);
 		updateTopbarColor(topbarColor);
 		updateButtonColor(buttonColor);
@@ -184,7 +194,8 @@ if(db){
 			if(snap.exists()){
 				const data = snap.data();
 				if(pendingSettings){
-					const matchesPending = (data.restaurantName || 'Your Business') === pendingSettings.restaurantName
+					const matchesPending = localizedText(data.restaurantName,'en') === pendingSettings.restaurantName.en
+						&& localizedText(data.restaurantName,'ar') === pendingSettings.restaurantName.ar
 						&& (data.logoUrl || '') === pendingSettings.logoUrl
 						&& (data.topbarColor || defaultTopbarColor) === pendingSettings.topbarColor
 						&& (data.buttonColor || defaultButtonColor) === pendingSettings.buttonColor;
@@ -192,7 +203,8 @@ if(db){
 					pendingSettings = null;
 				}
 				if(settingsDirty) return;
-				restaurantNameInput.value = data.restaurantName || 'Your Business';
+				restaurantNameInput.value = localizedText(data.restaurantName,'en') || 'Your Business';
+				restaurantNameArabicInput.value = data.restaurantName && typeof data.restaurantName === 'object' ? data.restaurantName.ar || '' : '';
 				updateNamePreview();
 				const fireLogo = data.logoUrl || '';
 				const fireTopbarColor = data.topbarColor || defaultTopbarColor;
@@ -201,6 +213,7 @@ if(db){
 				updateTopbarColor(fireTopbarColor);
 				updateButtonColor(fireButtonColor);
 				localStorage.setItem('restaurantName', restaurantNameInput.value || 'Your Business');
+				localStorage.setItem('restaurantNameAr',restaurantNameArabicInput.value || '');
 				localStorage.setItem('siteLogoUrl', fireLogo);
 			}
 		});
@@ -208,5 +221,5 @@ if(db){
 }
 
 window.addEventListener('storage', (e)=>{
-	if(e.key === 'siteLogoUrl' || e.key === 'restaurantName' || e.key === 'topbarColor' || e.key === 'buttonColor') loadSettings();
+	if(e.key === 'siteLogoUrl' || e.key === 'restaurantName' || e.key === 'restaurantNameAr' || e.key === 'topbarColor' || e.key === 'buttonColor') loadSettings();
 });

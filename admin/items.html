@@ -37,15 +37,23 @@
         <form id="item-form" class="admin-form">
           <input id="item-id" type="hidden">
           <div class="field-group">
-            <label>Item name</label>
+            <label for="item-name">Item name (English)</label>
             <input id="item-name" placeholder="Enter your item name" required>
           </div>
           <div class="field-group">
-            <label>Description</label>
+            <label for="item-name-ar">Item name (Arabic)</label>
+            <input id="item-name-ar" lang="ar" dir="rtl" placeholder="اسم المنتج بالعربية">
+          </div>
+          <div class="field-group">
+            <label for="item-description">Description (English)</label>
             <textarea id="item-description" rows="3" placeholder="Short product description"></textarea>
           </div>
           <div class="field-group">
-            <label>Category</label>
+            <label for="item-description-ar">Description (Arabic)</label>
+            <textarea id="item-description-ar" rows="3" lang="ar" dir="rtl" placeholder="وصف المنتج بالعربية"></textarea>
+          </div>
+          <div class="field-group">
+            <label for="item-category">Category (English)</label>
             <select id="item-category">
               <option value="">Select category</option>
             </select>
@@ -85,6 +93,6 @@
   </main>
 
   <script type="module" src="js/auth.js?v=12"></script>
-  <script type="module" src="js/items.js?v=9"></script>
+  <script type="module" src="js/items.js?v=13"></script>
 </body>
 </html>

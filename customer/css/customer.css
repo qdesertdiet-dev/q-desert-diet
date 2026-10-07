@@ -19,7 +19,7 @@ body{
   min-height:100dvh;
   margin:0;
   background:var(--page);
-  font-family:'Inter','Noto Sans Bengali',system-ui,sans-serif;
+  font-family:'Inter','Noto Sans Arabic',system-ui,sans-serif;
   color:var(--text);
 }
 button{font:inherit;border:0;background:none;cursor:pointer}
@@ -121,7 +121,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .quick-nav{justify-content:space-between}
 .app .confirm-order-btn{position:fixed;right:14px;bottom:84px;max-width:calc(100% - 28px);white-space:nowrap;background:var(--button-color,var(--accent))}
 @media(max-width:460px){.brand-wrap{left:68px;right:236px;top:27px}.top-actions{right:10px;gap:4px;max-width:204px}.switch-toggle{min-width:40px;padding:0 7px}.switch-toggle.language-toggle{min-width:62px}.cart-btn{padding-left:8px;padding-right:8px}.quick-nav{left:12px;right:12px}.quick{padding-left:8px;padding-right:8px;font-size:12px}}
-@media(max-width:370px){.top-actions .language-toggle{display:none}.brand-wrap{right:145px}.top-actions{max-width:150px}}
+@media(max-width:370px){.brand-wrap{right:196px}.top-actions{max-width:190px}}
 @media(prefers-reduced-motion:reduce){.brand{animation:none}}
 
 /* Keep the restaurant identity above the navigation controls. */
@@ -184,7 +184,7 @@ body:has(.app){min-height:100vh;min-height:100dvh;padding:0;background:var(--pag
 .app .brand-wrap,.app .topbar .brand-wrap{position:static;grid-area:brand;width:auto;min-width:0;max-width:none;justify-self:start;overflow:hidden;transform:none;justify-content:flex-start;gap:9px;text-decoration:none}
 .app .brand-mark{flex:0 0 36px;width:36px;height:36px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:var(--topbar-foreground,#fff);box-shadow:none;font-size:12px}
 .app .brand-mark img{border-radius:10px}
-.app .brand{max-width:100%;background:none;color:var(--topbar-foreground,#fff);-webkit-text-fill-color:currentColor;font-family:'Inter','Noto Sans Bengali',system-ui,sans-serif;font-size:16px;font-weight:700;line-height:1.2;letter-spacing:0;text-transform:uppercase;filter:none;animation:none}
+.app .brand{max-width:100%;background:none;color:var(--topbar-foreground,#fff);-webkit-text-fill-color:currentColor;font-family:'Inter','Noto Sans Arabic',system-ui,sans-serif;font-size:16px;font-weight:700;line-height:1.2;letter-spacing:0;text-transform:uppercase;filter:none;animation:none}
 .app .top-actions,.app .topbar .top-actions{position:static;grid-area:actions;max-width:none;justify-self:end;gap:6px}
 .app .switch-toggle{min-width:38px;height:38px;padding:0 8px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:rgba(255,255,255,.1);color:var(--topbar-foreground,#fff);box-shadow:none;font-size:13px}
 .app .switch-toggle.theme-toggle{font-size:18px}
@@ -192,7 +192,7 @@ body:has(.app){min-height:100vh;min-height:100dvh;padding:0;background:var(--pag
 .app .language-option{opacity:.65}
 .app .language-en{font-weight:700}
 .app .language-divider{opacity:.45}
-.app .language-toggle:not(.bn-mode) .language-en,.app .language-toggle.bn-mode .language-bn{opacity:1;color:#fff}
+.app .language-toggle:not(.ar-mode) .language-en,.app .language-toggle.ar-mode .language-ar{opacity:1;color:#fff}
 .app .cart-btn{min-height:38px;padding:5px 9px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:rgba(255,255,255,.1);color:var(--topbar-foreground,#fff);box-shadow:none}
 .app .cart-btn b{min-width:20px;height:20px;background:var(--accent);color:#17221d}
 .app .topbar .search-panel{position:relative;grid-area:search;left:auto;right:auto;top:auto;width:100%;padding:0;background:transparent}
@@ -343,6 +343,18 @@ body.cart-page{display:flex;flex-direction:column;min-height:100vh;min-height:10
 @media(min-width:1100px){.cart-page .cart-header{padding-top:32px;padding-bottom:26px}.cart-page .cart-header{gap:34px}.cart-page .cart-section-heading{padding-top:4px}}
 @media(max-width:600px){.cart-page .cart-header{gap:24px;width:calc(100% - 32px);padding:16px 0 20px}.cart-page .cart-header-top{gap:10px}.cart-page .customer-brand{gap:8px;font-size:13px}.cart-page .customer-brand-mark{width:34px;height:34px;flex-basis:34px}.cart-page .cart-back-link{min-height:38px;gap:6px;padding:0 9px;font-size:11px}.cart-page .cart-page-subtitle{font-size:13px}.cart-page:has(.cart-header)>main.cart-main{width:calc(100% - 32px);padding-bottom:32px}.cart-page .cart-shell{gap:12px}.cart-page .cart-section-heading h2{font-size:16px}.cart-page .cart-item{grid-template-columns:64px minmax(0,1fr);grid-template-areas:"image details" "image controls";align-content:center;align-items:center;gap:8px 12px;min-height:110px;padding:11px}.cart-page .cart-item-image{grid-area:image;width:64px;height:64px;border-radius:10px}.cart-page .cart-item-details{grid-area:details;gap:3px}.cart-page .cart-item-title{font-size:14px}.cart-page .cart-item-controls{grid-area:controls;justify-content:space-between;gap:8px;width:100%}.cart-page .cart-quantity-controls{gap:5px}.cart-page .quantity-button{width:34px;height:34px}.cart-page .remove-cart-item{min-height:34px}.cart-page .cart-summary{padding-top:15px}.cart-page .cart-summary strong{font-size:20px}.cart-page #checkout{justify-self:stretch;width:100%;min-height:50px}.cart-page .cart-empty{padding:30px 18px}}
 @media(max-width:360px){.cart-page .cart-header,.cart-page:has(.cart-header)>main.cart-main{width:calc(100% - 24px)}.cart-page .cart-header-top{gap:6px}.cart-page .cart-back-link{gap:5px;padding:0 7px;font-size:10px}.cart-page .cart-item{grid-template-columns:56px minmax(0,1fr);gap:8px}.cart-page .cart-item-image{width:56px;height:56px}.cart-page .quantity-button{width:32px;height:32px}}
+
+html[dir="rtl"] body{font-family:'Noto Sans Arabic','Inter',system-ui,sans-serif}
+html[dir="rtl"] .app .brand{font-family:'Noto Sans Arabic','Inter',system-ui,sans-serif;text-transform:none}
+html[dir="rtl"] .app #whatsapp-fab{right:auto;left:16px}
+html[dir="rtl"] .app .item-detail-close{right:auto;left:14px}
+html[dir="rtl"] .app .item-detail-prev{left:auto;right:12px}
+html[dir="rtl"] .app .item-detail-next{right:auto;left:12px}
+html[dir="rtl"] .cart-page .cart-page-heading{text-align:right}
+html[dir="rtl"] .cart-page #checkout{justify-self:start}
+html[dir="rtl"] .cart-page .cart-back-link>span:first-child{transform:scaleX(-1)}
+html[dir="rtl"] .food-price,html[dir="rtl"] .item-detail-price,html[dir="rtl"] .cart-item-price,html[dir="rtl"] .cart-item-line-total,html[dir="rtl"] .cart-summary strong,html[dir="rtl"] #confirm-order-total{direction:ltr;unicode-bidi:isolate}
+@media(max-width:600px){html[dir="rtl"] .app #whatsapp-fab{right:auto;left:12px}}
 
 .app #whatsapp-fab{position:fixed;z-index:8;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));transition:bottom .18s ease,transform .18s ease}
 .app .whatsapp-fab-link{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 16px;border:1px solid rgba(7,92,56,.12);border-radius:14px;background:#25d366;color:#073b25;font-family:inherit;font-size:13px;font-weight:700;text-decoration:none;box-shadow:0 5px 16px rgba(7,58,36,.18);transition:background-color .15s ease,transform .15s ease,box-shadow .15s ease}
