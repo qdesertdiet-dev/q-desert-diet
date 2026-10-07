@@ -1,6 +1,7 @@
 import { getUrlParams } from './restaurant.js';
 import { db } from '../../shared/firebase.js';
 import { localizedText } from '../../shared/multilingual.js';
+import { formatPrice } from '../../shared/money.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
 let storedCart = [];
@@ -41,6 +42,20 @@ document.querySelectorAll('a[href="index.html"]').forEach(link=>{ link.href = ca
 function updateRestaurantName(value){
 	const name = localizedText(value,lang) || 'Your Business';
 	document.querySelectorAll('[data-restaurant-name]').forEach(element=>{ element.textContent = name; });
+	const brandMark = document.querySelector('.customer-brand-mark');
+	const logoUrl = localStorage.getItem('siteLogoUrl') || '';
+	if(brandMark){
+		if(logoUrl){
+			const image = document.createElement('img');
+			image.src = logoUrl;
+			image.alt = `${name} logo`;
+			brandMark.replaceChildren(image);
+			brandMark.classList.add('has-logo');
+		}else{
+			brandMark.textContent = name.trim().slice(0,2).toUpperCase();
+			brandMark.classList.remove('has-logo');
+		}
+	}
 	document.title = `${name} | Your Cart`;
 }
 
@@ -99,7 +114,7 @@ applyCheckoutLocation({locationType:checkoutLocationType,locationCount:checkoutL
 applyButtonColor(localStorage.getItem('buttonColor'));
 window.addEventListener('storage',event=>{
 	if(event.key === 'buttonColor') applyButtonColor(event.newValue);
-	if(event.key === 'restaurantName' || event.key === 'restaurantNameAr'){
+	if(event.key === 'restaurantName' || event.key === 'restaurantNameAr' || event.key === 'siteLogoUrl'){
 		updateRestaurantName({en:localStorage.getItem('restaurantName') || '',ar:localStorage.getItem('restaurantNameAr') || ''});
 	}
 	if(event.key === 'checkoutLocationType' || event.key === 'checkoutLocationCount'){
@@ -141,8 +156,9 @@ async function loadBusinessSettings(){
 		if(data.restaurantName){
 			localStorage.setItem('restaurantName',localizedText(data.restaurantName,'en'));
 			localStorage.setItem('restaurantNameAr',localizedText(data.restaurantName,'ar'));
-			updateRestaurantName(data.restaurantName);
 		}
+		if(typeof data.logoUrl === 'string') localStorage.setItem('siteLogoUrl',data.logoUrl);
+		updateRestaurantName(data.restaurantName || {en:localStorage.getItem('restaurantName') || '',ar:localStorage.getItem('restaurantNameAr') || ''});
 		if(data.whatsapp){
 			localStorage.setItem('whatsappNumber', data.whatsapp);
 			localStorage.setItem('siteWhatsApp', data.whatsapp);
@@ -209,10 +225,10 @@ function renderCart(){
 		title.textContent = localizedText(item.name,lang) || copy[lang].product;
 		const price = document.createElement('p');
 		price.className = 'cart-item-price';
-		price.textContent = `${copy[lang].currency}${unitPrice} ${copy[lang].each}`;
+		price.textContent = `${copy[lang].currency}${formatPrice(unitPrice)} ${copy[lang].each}`;
 		const itemTotal = document.createElement('p');
 		itemTotal.className = 'cart-item-line-total';
-		itemTotal.textContent = `${copy[lang].currency}${lineTotal}`;
+		itemTotal.textContent = `${copy[lang].currency}${formatPrice(lineTotal)}`;
 		details.append(title,price,itemTotal);
 
 		const controls = document.createElement('div');
@@ -253,7 +269,7 @@ function renderCart(){
 	const summaryLabel = document.createElement('span');
 	summaryLabel.textContent = copy[lang].total;
 	const summaryTotal = document.createElement('strong');
-	summaryTotal.textContent = `${copy[lang].currency}${total}`;
+	summaryTotal.textContent = `${copy[lang].currency}${formatPrice(total)}`;
 	summary.append(summaryLabel,summaryTotal);
 	el.appendChild(summary);
 	checkoutBtn.disabled = !checkoutSettingsReady;
@@ -328,11 +344,11 @@ function buildMessage(lang='en'){
 	cart.forEach((item, index) => {
 		const name = localizedText(item.name,lang) || 'Product';
 		const lineTotal = itemPrice(item) * item.quantity;
-		lines.push(`${index + 1}. ${item.quantity} x ${name} — ${copy[lang].currency}${lineTotal}`);
+		lines.push(`${index + 1}. ${item.quantity} x ${name} — ${copy[lang].currency}${formatPrice(lineTotal)}`);
 		sum += lineTotal;
 	});
 	lines.push('');
-	lines.push(lang === 'ar' ? `الإجمالي: ${copy[lang].currency}${sum}` : `Total: ${copy[lang].currency}${sum}`);
+	lines.push(lang === 'ar' ? `الإجمالي: ${copy[lang].currency}${formatPrice(sum)}` : `Total: ${copy[lang].currency}${formatPrice(sum)}`);
 	return lines.join('\n');
 }
 

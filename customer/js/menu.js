@@ -1,6 +1,7 @@
 import {getUrlParams} from './restaurant.js';
 import { db } from '../../shared/firebase.js';
 import { localizedText } from '../../shared/multilingual.js';
+import { formatPrice } from '../../shared/money.js';
 import { doc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
 let categoriesData = [];
@@ -388,7 +389,7 @@ function openItemDetailModal(itemId){
 	nextImage.onclick = ()=>showImage(activeIndex + 1);
 	const itemCategory = categoriesData.find(category=>category.id === item.categoryId);
 	categoryEl.textContent = itemCategory ? localizedText(itemCategory.name,lang) : localizedText(item.category,lang) || translations[lang].item;
-	priceEl.textContent = `${translations[lang].pricePrefix}${finalPrice}`;
+	priceEl.textContent = `${translations[lang].pricePrefix}${formatPrice(finalPrice)}`;
 	titleEl.textContent = title;
 	descriptionEl.textContent = localizedText(item.description,lang) || (lang === 'ar' ? 'لا يوجد وصف.' : 'No description available.');
 	const extraLabels = lang === 'ar'
@@ -464,7 +465,7 @@ function renderMenu(){
 		const actions = quantity
 			? `<div class="card-quantity-controls" aria-label="${title} quantity"><button type="button" data-cart-delta="-1" data-item-id="${itemId}" aria-label="${translations[lang].decrease} ${title}">−</button><span aria-live="polite">${quantity}</span><button type="button" data-cart-delta="1" data-item-id="${itemId}" aria-label="${translations[lang].increase} ${title}">+</button></div>`
 			: `<button type="button" class="add-to-cart-btn" data-item-id="${itemId}" aria-label="${translations[lang].add} ${title}">+ ${translations[lang].add}</button>`;
-		return `<article class="food-card"><button type="button" class="food-card-media item-detail-trigger" data-item-id="${itemId}" aria-label="${translations[lang].viewDetails} ${title}"><img src="${img}"${imageSrcset ? ` srcset="${imageSrcset}" sizes="120px"` : ''} alt="${title}" loading="${imageLoading}"${imagePriority} decoding="async"></button><div class="food-card-body"><h3>${title}</h3>${description ? `<p class="food-description">${description}</p>` : ''}<div class="food-price-row"><span class="food-price">${translations[lang].pricePrefix}${finalPrice}</span>${discount > 0 ? `<span class="food-discount">-${discount}%</span>` : ''}</div><div class="food-card-actions">${actions}</div></div></article>`;
+		return `<article class="food-card"><button type="button" class="food-card-media item-detail-trigger" data-item-id="${itemId}" aria-label="${translations[lang].viewDetails} ${title}"><img src="${img}"${imageSrcset ? ` srcset="${imageSrcset}" sizes="120px"` : ''} alt="${title}" loading="${imageLoading}"${imagePriority} decoding="async"></button><div class="food-card-body"><h3>${title}</h3>${description ? `<p class="food-description">${description}</p>` : ''}<div class="food-price-row"><span class="food-price">${translations[lang].pricePrefix}${formatPrice(finalPrice)}</span>${discount > 0 ? `<span class="food-discount">-${discount}%</span>` : ''}</div><div class="food-card-actions">${actions}</div></div></article>`;
 	}).join('');
 
 	m.querySelectorAll('.item-detail-trigger').forEach((button) => {
@@ -559,7 +560,7 @@ function updateCartCount(){
 		if(bottomBadge){ bottomBadge.innerText = String(count); bottomBadge.hidden = count === 0; }
 		if(confirmOrder){
 			confirmOrder.hidden = count === 0;
-			const formattedSubtotal = subtotal.toLocaleString(lang === 'ar' ? 'ar' : 'en-BD',{maximumFractionDigits:2});
+			const formattedSubtotal = formatPrice(subtotal);
 			confirmOrder.setAttribute('aria-label', `${translations[lang].viewCart}: ${count} ${count === 1 ? translations[lang].item : translations[lang].items}, ${translations[lang].pricePrefix}${formattedSubtotal}`);
 			const confirmCount = document.getElementById('confirm-order-count');
 			if(confirmCount) confirmCount.textContent = String(count);

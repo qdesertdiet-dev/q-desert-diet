@@ -1,5 +1,6 @@
 import { db, firebaseApp } from '../../shared/firebase.js';
 import { localizedText, localizedValue } from '../../shared/multilingual.js';
+import { formatPrice } from '../../shared/money.js';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import { getStorage, ref as storageRef, deleteObject } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
@@ -235,7 +236,7 @@ async function renderItems(){
 					el.appendChild(thumb);
 				}
 				const details = document.createElement('span');
-				details.textContent = `${localizedText(data.name,'en') || 'Unnamed item'} — ${localizedText(data.category,'en') || 'Uncategorized'} — QAR ${Number(data.price) || 0}`;
+				details.textContent = `${localizedText(data.name,'en') || 'Unnamed item'} — ${localizedText(data.category,'en') || 'Uncategorized'} — QAR ${formatPrice(data.price)}`;
 				const actions = document.createElement('div');
 				const editButton = document.createElement('button');
 				editButton.dataset.id = docSnap.id;
@@ -370,7 +371,7 @@ list.addEventListener('click', async (ev)=>{
 			descriptionInput.value = localizedText(data.description,'en');
 			descriptionArabicInput.value = data.description && typeof data.description === 'object' ? data.description.ar || '' : '';
 			catInput.value = data.categoryId || localizedText(data.category,'en');
-			priceInput.value = data.price || 0;
+			priceInput.value = formatPrice(data.price);
 			discountInput.value = data.discount || 0;
 			if(popularInput) popularInput.checked = typeof data.popular === 'boolean'
 				? data.popular
